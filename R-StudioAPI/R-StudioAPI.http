@@ -1,0 +1,6 @@
+@R_StudioAPI_HostAddress = http://localhost:5138
+
+GET {{R_StudioAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
