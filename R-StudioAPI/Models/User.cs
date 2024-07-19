@@ -1,13 +1,19 @@
-﻿namespace R_StudioAPI.Models
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace R_StudioAPI.Models
 {
-    public class User
+    public class User : IdentityUser<long>
     {
-        public long Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public Role Role { get; set; } = new();
-        public string Avatar { get; set; } = string.Empty;
+        //For Admin
+        public virtual List<Post> MyPosts { get; set; } = []; 
+        //For All
+        public string? Avatar { get; set; }
         public string Description { get; set; } = string.Empty;
-        public List<Video> History { get; set; } = [];
-        public List<Video> Liked { get; set; } = [];
+        public virtual List<Video> History { get; set; } = [];
+        public virtual List<Video> LikedVideos { get; set; } = [];
+        public virtual List<Post> LikedPosts { get; set; } = [];
+        public long FavouriteId { get; set; }
+        public virtual Favourite Favourite { get; set; } = new();
+        public DateTime RegistratedOn { get; set; } = DateTime.Now;
     }
 }
