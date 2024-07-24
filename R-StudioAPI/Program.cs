@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using R_StudioAPI.Config;
 using R_StudioAPI.Data;
 using R_StudioAPI.Models;
 using R_StudioAPI.Services;
 using R_StudioAPI.Services.Implications;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace R_StudioAPI
 {
@@ -22,6 +24,9 @@ namespace R_StudioAPI
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddScoped<ITokenService, TokenService>();
+            builder.Services.AddSingleton<IMediaService, MediaService>();
+
+            builder.Services.Configure<ApplicationConfig>(builder.Configuration.GetSection(nameof(ApplicationConfig)));
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();

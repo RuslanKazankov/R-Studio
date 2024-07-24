@@ -23,7 +23,7 @@ namespace R_StudioAPI.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto loginDto)
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -36,13 +36,12 @@ namespace R_StudioAPI.Controllers
 
             if (!result.Succeeded)
                 return Unauthorized("Username or password incorrect!");
-            
 
             return Ok(new CreatedUser
             {
                 UserName = user.UserName,
                 Email = user.Email,
-                Token = _tokenService.CreateToken(user)
+                Token = await _tokenService.CreateToken(user)
             });
         }
 
@@ -72,7 +71,7 @@ namespace R_StudioAPI.Controllers
                             {
                                 UserName = user.UserName,
                                 Email = user.Email,
-                                Token = _tokenService.CreateToken(user)
+                                Token = await _tokenService.CreateToken(user)
                             }
                         );
                     }

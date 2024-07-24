@@ -14,7 +14,7 @@ namespace R_StudioAPI.Data
         public DbSet<Favourite> Favourites { get; set; }
         public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
         {
-            //Database.EnsureCreated();
+            Database.EnsureCreated();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
