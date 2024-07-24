@@ -362,3 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /R-StudioAPI/appsettings.json
+/R-StudioNUnitTest/R-StudioNUnitTest.csproj
+/R-StudioNUnitTest/R-StudioNUnitTest.csproj
+/R-StudioNUnitTest/PostControllerTest.cs
+/R-StudioNUnitTest/GlobalUsings.cs
