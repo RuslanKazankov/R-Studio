@@ -7,7 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using R_StudioAPI.Config;
 using R_StudioAPI.Data;
+using R_StudioAPI.Mappers;
 using R_StudioAPI.Models;
+using R_StudioAPI.Repository;
 using R_StudioAPI.Services;
 using R_StudioAPI.Services.Implications;
 using System.Globalization;
@@ -25,6 +27,8 @@ namespace R_StudioAPI
             builder.Services.AddControllers();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddSingleton<IMediaService, MediaService>();
+            builder.Services.AddScoped<IPostRepository, PostRepository>();
+            builder.Services.AddScoped<IPostMapper, PostMapper>();
 
             builder.Services.Configure<ApplicationConfig>(builder.Configuration.GetSection(nameof(ApplicationConfig)));
 

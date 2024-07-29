@@ -5,9 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using R_StudioAPI.Config;
 using R_StudioAPI.Data;
+using R_StudioAPI.Dtos.Pageable;
 using R_StudioAPI.Dtos.Post;
 using R_StudioAPI.Extensions;
+using R_StudioAPI.Mappers;
 using R_StudioAPI.Models;
+using R_StudioAPI.Repository;
 using R_StudioAPI.Services;
 using System.Security.Claims;
 
@@ -18,57 +21,55 @@ namespace R_StudioAPI.Controllers
     public class PostController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
-        private readonly ApplicationDbContext _applicationDbContext;
+        private readonly IPostRepository _postRepository;
         private readonly IMediaService _mediaService;
         private readonly ApplicationConfig _appConfig;
+        private readonly IPostMapper _postMapper;
 
-        public PostController(UserManager<User> userManager, ApplicationDbContext applicationDbContext, IMediaService mediaService, IOptions<ApplicationConfig> appConfig)
+        public PostController(UserManager<User> userManager, IPostRepository postRepository, IMediaService mediaService, IOptions<ApplicationConfig> appConfig, IPostMapper postMapper)
         {
             _userManager = userManager;
-            _applicationDbContext = applicationDbContext;
+            _postRepository = postRepository;
             _mediaService = mediaService;
             _appConfig = appConfig.Value;
+            _postMapper = postMapper;
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPost(long id)
+        [HttpGet("get")]
+        public IActionResult GetPosts([FromQuery] PageDto pageDto)
         {
-            Post? post = await _applicationDbContext.Posts.FirstOrDefaultAsync(p => p.Id == id);
+            IEnumerable<Post> posts = _postRepository.GetPosts(pageDto.Page, pageDto.PageSize);
+
+            List<PostResponseDto> postsDtos = [];
+
+            foreach (Post post in posts)
+            {
+                postsDtos.Add(_postMapper.ToDto(post, Request.Host.Value));
+            }
+
+            return Ok(postsDtos);
+        }
+
+        [HttpGet("get/{id}")]
+        public IActionResult GetPost(long id)
+        {
+            Post? post = _postRepository.Get(id);
 
             if (post == null)
             {
                 return BadRequest("Post not found");
             }
 
-            List<PostMediaDto> mediaDtos = [];
-            foreach (PostMedia mediaFile in post.Media)
-            {
-                mediaDtos.Add(new PostMediaDto()
-                {
-                    Id = mediaFile.Id,
-                    Url = $"https://{Request.Host}/api/media/postmedia/{mediaFile.Url}",
-                    PostId = mediaFile.PostId
-                });
-            }
+            PostResponseDto postResponseDto = _postMapper.ToDto(post, Request.Host.Value);
 
-            PostResponseDto postMediaDto = new PostResponseDto()
-            {
-                Id = post.Id,
-                AuthorId = post.AuthorId,
-                CreatedOn = post.CreatedOn,
-                Media = mediaDtos,
-                Text = post.Text
-            };
-
-
-            return Ok(postMediaDto);
+            return Ok(postResponseDto);
         }
 
         [HttpPost("add")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddPost([FromForm] CreatePostRequestDto postDto)
         {
-            User? user = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.UserName == User.GetUsername());
+            User? user = await _userManager.FindByNameAsync(User.GetUsername());
 
             if (user == null)
             {
@@ -87,13 +88,13 @@ namespace R_StudioAPI.Controllers
                     }
                 }
 
-                Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}/{_appConfig}");
+                Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}");
 
                 foreach (IFormFile file in postDto.MediaFiles)
                 {
                     string newFileName = $"{Guid.NewGuid()}-{DateTime.Now:dd.MM.yyyy-hh.mm.ss}{Path.GetExtension(file.FileName)}";
 
-                    using FileStream fileStream = new FileStream($"{Directory.GetCurrentDirectory()}/{newFileName}", FileMode.Create);
+                    using FileStream fileStream = new FileStream($"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}{newFileName}", FileMode.Create);
                     await file.CopyToAsync(fileStream);
 
                     media.Add(new PostMedia()
@@ -105,8 +106,8 @@ namespace R_StudioAPI.Controllers
 
             Post post = new Post() { Author = user, Text = postDto.Text, CreatedOn = DateTime.Now, Media = media };
 
-            _applicationDbContext.Posts.Add(post);
-            await _applicationDbContext.SaveChangesAsync();
+            await _postRepository.Create(post);
+            await _postRepository.Save();
 
             return Ok();
         }
