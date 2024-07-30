@@ -67,7 +67,7 @@ namespace R_StudioAPI.Controllers
 
         [HttpPost("add")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AddPost([FromForm] CreatePostRequestDto postDto)
+        public async Task<IActionResult> AddPost([FromForm] PostRequestDto postRequestDto)
         {
             User? user = await _userManager.FindByNameAsync(User.GetUsername());
 
@@ -78,9 +78,9 @@ namespace R_StudioAPI.Controllers
 
             List<PostMedia> media = new List<PostMedia>();
 
-            if (postDto.MediaFiles != null)
+            if (postRequestDto.MediaFiles != null)
             {
-                foreach (IFormFile file in postDto.MediaFiles)
+                foreach (IFormFile file in postRequestDto.MediaFiles)
                 {
                     if (!IsMediaFile(file))
                     {
@@ -90,7 +90,7 @@ namespace R_StudioAPI.Controllers
 
                 Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}");
 
-                foreach (IFormFile file in postDto.MediaFiles)
+                foreach (IFormFile file in postRequestDto.MediaFiles)
                 {
                     string newFileName = $"{Guid.NewGuid()}-{DateTime.Now:dd.MM.yyyy-hh.mm.ss}{Path.GetExtension(file.FileName)}";
 
@@ -104,18 +104,100 @@ namespace R_StudioAPI.Controllers
                 }
             }
 
-            Post post = new Post() { Author = user, Text = postDto.Text, CreatedOn = DateTime.Now, Media = media };
+            Post post = new Post() { Author = user, Text = postRequestDto.Text, CreatedOn = DateTime.Now, Media = media };
 
             await _postRepository.Create(post);
             await _postRepository.Save();
 
             return Ok();
         }
-
         private bool IsMediaFile(IFormFile file)
         {
             string fileExtension = Path.GetExtension(file.FileName).ToLower();
             return _mediaService.GetMediaExtensions().Contains(fileExtension);
+        }
+
+        [HttpPost("update")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdatePost([FromBody] PostRequestDto postRequestDto, [FromBody] long id)
+        {
+            User? user = await _userManager.FindByNameAsync(User.GetUsername());
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            Post? targetPost = _postRepository.Get(id);
+
+            if (targetPost == null)
+            {
+                return BadRequest($"Post #{id} not found");
+            }
+
+            if (postRequestDto.MediaFiles != null)
+            {
+                List<PostMedia> media = new List<PostMedia>();
+
+                foreach (IFormFile file in postRequestDto.MediaFiles)
+                {
+                    if (!IsMediaFile(file))
+                    {
+                        return BadRequest("The file uploaded is not a media file!");
+                    }
+                }
+
+                Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}");
+
+                foreach (IFormFile file in postRequestDto.MediaFiles)
+                {
+                    string newFileName = $"{Guid.NewGuid()}-{DateTime.Now:dd.MM.yyyy-hh.mm.ss}{Path.GetExtension(file.FileName)}";
+
+                    using FileStream fileStream = new FileStream($"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}{newFileName}", FileMode.Create);
+                    await file.CopyToAsync(fileStream);
+
+                    media.Add(new PostMedia()
+                    {
+                        Url = newFileName
+                    });
+                }
+
+                targetPost.Media = media;
+            }
+
+            targetPost.Text = postRequestDto.Text;
+
+            await _postRepository.Save();
+
+            return Ok();
+        }
+
+        [HttpDelete("delete")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeletePost(long id, bool confirm)
+        {
+            User? user = await _userManager.FindByNameAsync(User.GetUsername());
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            if (!confirm)
+            {
+                return BadRequest("Not confirmed");
+            }
+
+            Post? post = _postRepository.Get(id);
+
+            if (post == null)
+            {
+                return BadRequest("Post not found");
+            }
+
+            _postRepository.Delete(id);
+
+            return Ok("Post deleted");
         }
     }
 }

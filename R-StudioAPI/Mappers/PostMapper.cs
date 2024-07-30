@@ -1,4 +1,5 @@
-﻿using R_StudioAPI.Dtos.Post;
+﻿using Microsoft.Identity.Client;
+using R_StudioAPI.Dtos.Post;
 using R_StudioAPI.Models;
 
 namespace R_StudioAPI.Mappers
@@ -7,10 +8,10 @@ namespace R_StudioAPI.Mappers
     {
         public PostResponseDto ToDto(Post post, string hostHeader)
         {
-            List<PostMediaDto> mediaDtos = [];
+            List<PostMediaResponseDto> mediaDtos = [];
             foreach (PostMedia mediaFile in post.Media)
             {
-                mediaDtos.Add(new PostMediaDto()
+                mediaDtos.Add(new PostMediaResponseDto()
                 {
                     Id = mediaFile.Id,
                     Url = $"https://{hostHeader}/api/media/postmedia/file?filename={mediaFile.Url}",

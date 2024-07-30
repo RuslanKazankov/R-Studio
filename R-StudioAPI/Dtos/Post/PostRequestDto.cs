@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace R_StudioAPI.Dtos.Post
 {
-    public class CreatePostRequestDto
+    public class PostRequestDto
     {
         [Required]
         public string Text { get; set; } = String.Empty;

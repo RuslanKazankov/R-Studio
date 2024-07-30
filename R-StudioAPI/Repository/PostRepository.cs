@@ -16,6 +16,6 @@ namespace R_StudioAPI.Repository
         public IEnumerable<Post> GetPosts(int page, int pageSize)
         {
             return _context.Posts.OrderByDescending(p => p.Id).Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        } 
+        }
     }
 }
