@@ -130,11 +130,11 @@ namespace R_StudioAPI.Controllers
                 return Unauthorized();
             }
 
-            Post? targetPost = _postRepository.Get(id);
+            Post? targetPost = _postRepository.Get(postId);
 
             if (targetPost == null)
             {
-                return BadRequest($"Post #{id} not found");
+                return BadRequest($"Post #{postId} not found");
             }
 
             if (postRequestDto.MediaFiles != null)
