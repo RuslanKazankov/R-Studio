@@ -24,25 +24,9 @@ namespace R_StudioAPI.Controllers
             _postMediaRepository = postMediaRepository;
         }
 
-        [HttpGet("postmedia/file")]
-        public async Task<IActionResult> GetPostMedia([FromQuery] long? id, [FromQuery] string? filename)
+        [HttpGet("postmedia/{filename:string}")]
+        public async Task<IActionResult> GetPostMedia(string filename)
         {
-            if (id != null)
-            {
-                PostMedia? postMedia = _postMediaRepository.Get(id.Value);
-
-                if (postMedia == null)
-                {
-                    return BadRequest("File not found");
-                }
-
-                filename = postMedia.Url;
-            }
-            else if (filename == null)
-            {
-                return BadRequest("You need use params id or filename");
-            }
-
             string directoryPath = $"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}";
             string filePath = $"{directoryPath}{filename}";
 
@@ -61,6 +45,21 @@ namespace R_StudioAPI.Controllers
             byte[] file = await System.IO.File.ReadAllBytesAsync(filePath);
 
             return File(file, mediatype);
+        }
+
+        [HttpGet("postmedia/{id:long}")]
+        public async Task<IActionResult> GetPostMedia(long id)
+        {
+            PostMedia? postMedia = _postMediaRepository.Get(id);
+
+            if (postMedia == null)
+            {
+                return BadRequest("File not found");
+            }
+
+            string filename = postMedia.Url;
+
+            return await GetPostMedia(filename);
         }
     }
 }

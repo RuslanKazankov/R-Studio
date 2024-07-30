@@ -14,7 +14,7 @@ namespace R_StudioAPI.Mappers
                 mediaDtos.Add(new PostMediaResponseDto()
                 {
                     Id = mediaFile.Id,
-                    Url = $"https://{hostHeader}/api/media/postmedia/file?filename={mediaFile.Url}",
+                    Url = $"https://{hostHeader}/api/media/postmedia/{mediaFile.Url}",
                     PostId = mediaFile.PostId
                 });
             }

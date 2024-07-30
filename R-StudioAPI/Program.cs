@@ -28,7 +28,10 @@ namespace R_StudioAPI
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddSingleton<IMediaService, MediaService>();
             builder.Services.AddScoped<IPostRepository, PostRepository>();
+            builder.Services.AddScoped<IVideoRepository, VideoRepository>();
+            builder.Services.AddScoped<ICommentaryRepository, CommentaryRepository>();
             builder.Services.AddScoped<IPostMapper, PostMapper>();
+            builder.Services.AddScoped<ICommentaryMapper, CommentaryMapper>();
 
             builder.Services.Configure<ApplicationConfig>(builder.Configuration.GetSection(nameof(ApplicationConfig)));
 

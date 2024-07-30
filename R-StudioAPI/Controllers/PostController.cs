@@ -22,14 +22,16 @@ namespace R_StudioAPI.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly IPostRepository _postRepository;
+        private readonly IPostMediaRepository _postMediaRepository;
         private readonly IMediaService _mediaService;
         private readonly ApplicationConfig _appConfig;
         private readonly IPostMapper _postMapper;
 
-        public PostController(UserManager<User> userManager, IPostRepository postRepository, IMediaService mediaService, IOptions<ApplicationConfig> appConfig, IPostMapper postMapper)
+        public PostController(UserManager<User> userManager, IPostRepository postRepository, IPostMediaRepository postMediaRepository, IMediaService mediaService, IOptions<ApplicationConfig> appConfig, IPostMapper postMapper)
         {
             _userManager = userManager;
             _postRepository = postRepository;
+            _postMediaRepository = postMediaRepository;
             _mediaService = mediaService;
             _appConfig = appConfig.Value;
             _postMapper = postMapper;
@@ -119,7 +121,7 @@ namespace R_StudioAPI.Controllers
 
         [HttpPost("update")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdatePost([FromBody] PostRequestDto postRequestDto, [FromBody] long id)
+        public async Task<IActionResult> UpdatePost([FromBody] PostRequestDto postRequestDto, [FromBody] long postId)
         {
             User? user = await _userManager.FindByNameAsync(User.GetUsername());
 
@@ -137,6 +139,8 @@ namespace R_StudioAPI.Controllers
 
             if (postRequestDto.MediaFiles != null)
             {
+                _postMediaRepository.RemoveList(targetPost.Media);
+
                 List<PostMedia> media = new List<PostMedia>();
 
                 foreach (IFormFile file in postRequestDto.MediaFiles)
