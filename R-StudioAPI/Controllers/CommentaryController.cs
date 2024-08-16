@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using R_StudioAPI.DAL.Interfaces;
 using R_StudioAPI.Dtos.Commentary;
 using R_StudioAPI.Dtos.Pageable;
 using R_StudioAPI.Extensions;
 using R_StudioAPI.Mappers;
 using R_StudioAPI.Models;
-using R_StudioAPI.Repository;
+using R_StudioAPI.Repository.Interfaces;
 
 namespace R_StudioAPI.Controllers
 {
@@ -15,60 +16,55 @@ namespace R_StudioAPI.Controllers
     public class CommentaryController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
-        private readonly ICommentaryRepository _commentaryRepository;
-        private readonly IPostRepository _postRepository;
-        private readonly IVideoRepository _videoRepository;
+        private readonly ICommentaryUoW _commentaryUoW;
         private readonly ICommentaryMapper _commentaryMapper;
 
-        public CommentaryController(UserManager<User> userManager, ICommentaryRepository commentaryRepository, IPostRepository postRepository,
-            IVideoRepository videoRepository, ICommentaryMapper commentaryMapper)
+        public CommentaryController(UserManager<User> userManager, ICommentaryUoW commentaryUoW, ICommentaryMapper commentaryMapper)
         {
             _userManager = userManager;
-            _commentaryRepository = commentaryRepository;
-            _postRepository = postRepository;
-            _videoRepository = videoRepository;
+            _commentaryUoW = commentaryUoW;
             _commentaryMapper = commentaryMapper;
         }
 
         [HttpGet("get")]
         public IActionResult GetCommentaries([FromQuery] PageDto pageDto, [FromQuery] long? VideoId, [FromQuery] long? PostId)
         {
-            if (PostId == null ^ VideoId == null)
+            if (PostId != null ^ VideoId == null)
             {
                 return BadRequest("One PostId or VideoId parameter was expected");
             }
 
-            IEnumerable<CommentaryResponseDto> commentaryDtos = [];
+            List<CommentaryResponseDto> commentaryDtos = [];
             if (PostId != null)
             {
-                Post? post = _postRepository.Get(PostId.Value);
+                Post? post = _commentaryUoW.PostRepository.Get(PostId.Value);
 
                 if (post == null)
                 {
                     return BadRequest("Post not found");
                 }
 
-                var commentaries = _commentaryRepository.GetListByPostId(PostId.Value, pageDto.Page, pageDto.PageSize);
+                var commentaries = _commentaryUoW.CommentaryRepository.GetListByPostId(PostId.Value, pageDto.Page, pageDto.PageSize);
 
                 foreach (var commentary in commentaries)
                 {
-                    commentaryDtos.Append(_commentaryMapper.ToDto(commentary));
+                    commentaryDtos.Add(_commentaryMapper.ToDto(commentary));
                 }
             }
             else if (VideoId != null)
             {
-                Video? video = _videoRepository.Get(VideoId.Value);
+                Video? video = _commentaryUoW.VideoRepository.Get(VideoId.Value);
 
                 if (video == null)
                 {
                     return BadRequest("Video not found");
                 }
 
-                var commentaries = _commentaryRepository.GetListByVideoId(VideoId.Value, pageDto.Page, pageDto.PageSize);
+                var commentaries = _commentaryUoW.CommentaryRepository.GetListByVideoId(VideoId.Value, pageDto.Page, pageDto.PageSize);
 
                 foreach (var commentary in commentaries)
                 {
-                    commentaryDtos.Append(_commentaryMapper.ToDto(commentary));
+                    commentaryDtos.Add(_commentaryMapper.ToDto(commentary));
                 }
             }
 
@@ -95,7 +91,7 @@ namespace R_StudioAPI.Controllers
 
             if (commentaryRequestDto.PostId != null)
             {
-                Post? post = _postRepository.Get(commentaryRequestDto.PostId.Value);
+                Post? post = _commentaryUoW.PostRepository.Get(commentaryRequestDto.PostId.Value);
 
                 if (post == null)
                 {
@@ -106,7 +102,7 @@ namespace R_StudioAPI.Controllers
             }
             else if (commentaryRequestDto.VideoId != null)
             {
-                Video? video = _videoRepository.Get(commentaryRequestDto.VideoId.Value);
+                Video? video = _commentaryUoW.VideoRepository.Get(commentaryRequestDto.VideoId.Value);
 
                 if (video == null)
                 {
@@ -117,14 +113,14 @@ namespace R_StudioAPI.Controllers
             }
             else return BadRequest("Unknown Error");
 
-            await _commentaryRepository.Create(commentary);
-            await _commentaryRepository.Save();
+            await _commentaryUoW.CommentaryRepository.Create(commentary);
+            await _commentaryUoW.Save();
             return Ok();
         }
 
         [HttpPost("update")]
         [Authorize]
-        public async Task<IActionResult> UpdateCommentary([FromBody] long commentaryId, [FromBody] string newText)
+        public async Task<IActionResult> UpdateCommentary([FromBody] CommentaryUpdateDto commentaryUpdateDto)
         {
             User? user = await _userManager.FindByNameAsync(User.GetUsername());
 
@@ -133,7 +129,7 @@ namespace R_StudioAPI.Controllers
                 return Unauthorized();
             }
 
-            Commentary? commentary = _commentaryRepository.Get(commentaryId);
+            Commentary? commentary = _commentaryUoW.CommentaryRepository.Get(commentaryUpdateDto.CommentaryId);
 
             if (commentary == null)
             {
@@ -145,16 +141,16 @@ namespace R_StudioAPI.Controllers
                 return BadRequest("You can only edit your own comments");
             }
 
-            commentary.Text = newText;
+            commentary.Text = commentaryUpdateDto.Text;
 
-            await _commentaryRepository.Save();
+            await _commentaryUoW.Save();
 
             return Ok();
         }
 
         [HttpDelete("delete")]
         [Authorize]
-        public async Task<IActionResult> DeleteCommentary([FromBody] long commentaryId)
+        public async Task<IActionResult> DeleteCommentary([FromQuery] long commentaryId)
         {
             User? user = await _userManager.FindByNameAsync(User.GetUsername());
 
@@ -163,7 +159,7 @@ namespace R_StudioAPI.Controllers
                 return Unauthorized();
             }
 
-            Commentary? commentary = _commentaryRepository.Get(commentaryId);
+            Commentary? commentary = _commentaryUoW.CommentaryRepository.Get(commentaryId);
 
             if (commentary == null)
             {
@@ -175,8 +171,8 @@ namespace R_StudioAPI.Controllers
                 return BadRequest("You can only delete your own comments");
             }
 
-            _commentaryRepository.Delete(commentaryId);
-            await _commentaryRepository.Save();
+            _commentaryUoW.CommentaryRepository.Delete(commentaryId);
+            await _commentaryUoW.Save();
 
             return Ok();
         }

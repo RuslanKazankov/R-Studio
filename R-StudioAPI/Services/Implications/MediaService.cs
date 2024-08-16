@@ -26,5 +26,11 @@
             
             return value;
         }
+
+        public bool IsMediaFile(IFormFile file)
+        {
+            string fileExtension = Path.GetExtension(file.FileName).ToLower();
+            return GetMediaExtensions().Contains(fileExtension);
+        }
     }
 }

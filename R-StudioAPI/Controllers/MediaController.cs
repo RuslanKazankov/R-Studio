@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 using R_StudioAPI.Config;
 using R_StudioAPI.Models;
-using R_StudioAPI.Repository;
+using R_StudioAPI.Repository.Interfaces;
 using R_StudioAPI.Services;
 using System.Net;
 
@@ -24,7 +24,7 @@ namespace R_StudioAPI.Controllers
             _postMediaRepository = postMediaRepository;
         }
 
-        [HttpGet("postmedia/{filename:string}")]
+        [HttpGet("postmedia/{filename}")]
         public async Task<IActionResult> GetPostMedia(string filename)
         {
             string directoryPath = $"{Directory.GetCurrentDirectory()}/{_appConfig.PathPostMedia}";

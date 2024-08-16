@@ -4,5 +4,6 @@
     {
         string[] GetMediaExtensions();
         string? TypeFromMediaExtension(string extension);
+        bool IsMediaFile(IFormFile formFile);
     }
 }

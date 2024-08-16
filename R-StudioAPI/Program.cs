@@ -6,10 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using R_StudioAPI.Config;
+using R_StudioAPI.DAL.Implications;
+using R_StudioAPI.DAL.Interfaces;
 using R_StudioAPI.Data;
 using R_StudioAPI.Mappers;
 using R_StudioAPI.Models;
-using R_StudioAPI.Repository;
+using R_StudioAPI.Repository.Implications;
+using R_StudioAPI.Repository.Interfaces;
 using R_StudioAPI.Services;
 using R_StudioAPI.Services.Implications;
 using System.Globalization;
@@ -27,9 +30,6 @@ namespace R_StudioAPI
             builder.Services.AddControllers();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddSingleton<IMediaService, MediaService>();
-            builder.Services.AddScoped<IPostRepository, PostRepository>();
-            builder.Services.AddScoped<IVideoRepository, VideoRepository>();
-            builder.Services.AddScoped<ICommentaryRepository, CommentaryRepository>();
             builder.Services.AddScoped<IPostMapper, PostMapper>();
             builder.Services.AddScoped<ICommentaryMapper, CommentaryMapper>();
 
@@ -100,6 +100,13 @@ namespace R_StudioAPI
                     .UseLazyLoadingProxies()
                     .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
+
+            builder.Services.AddScoped<IPostRepository, PostRepository>();
+            builder.Services.AddScoped<IPostMediaRepository, PostMediaRepository>();
+            builder.Services.AddScoped<IVideoRepository, VideoRepository>();
+            builder.Services.AddScoped<ICommentaryRepository, CommentaryRepository>();
+            builder.Services.AddScoped<IPostUoW, PostUoW>();
+            builder.Services.AddScoped<ICommentaryUoW, CommentaryUoW>();
 
             var app = builder.Build();
 

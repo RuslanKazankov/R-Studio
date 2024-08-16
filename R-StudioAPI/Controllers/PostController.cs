@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using R_StudioAPI.Config;
+using R_StudioAPI.DAL.Interfaces;
 using R_StudioAPI.Data;
 using R_StudioAPI.Dtos.Pageable;
 using R_StudioAPI.Dtos.Post;
 using R_StudioAPI.Extensions;
 using R_StudioAPI.Mappers;
 using R_StudioAPI.Models;
-using R_StudioAPI.Repository;
+using R_StudioAPI.Repository.Interfaces;
 using R_StudioAPI.Services;
 using System.Security.Claims;
 
@@ -21,17 +22,15 @@ namespace R_StudioAPI.Controllers
     public class PostController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
-        private readonly IPostRepository _postRepository;
-        private readonly IPostMediaRepository _postMediaRepository;
+        private readonly IPostUoW _postUoW;
         private readonly IMediaService _mediaService;
         private readonly ApplicationConfig _appConfig;
         private readonly IPostMapper _postMapper;
 
-        public PostController(UserManager<User> userManager, IPostRepository postRepository, IPostMediaRepository postMediaRepository, IMediaService mediaService, IOptions<ApplicationConfig> appConfig, IPostMapper postMapper)
+        public PostController(UserManager<User> userManager, IPostUoW postUoW, IMediaService mediaService, IOptions<ApplicationConfig> appConfig, IPostMapper postMapper)
         {
             _userManager = userManager;
-            _postRepository = postRepository;
-            _postMediaRepository = postMediaRepository;
+            _postUoW = postUoW;
             _mediaService = mediaService;
             _appConfig = appConfig.Value;
             _postMapper = postMapper;
@@ -40,7 +39,7 @@ namespace R_StudioAPI.Controllers
         [HttpGet("get")]
         public IActionResult GetPosts([FromQuery] PageDto pageDto)
         {
-            IEnumerable<Post> posts = _postRepository.GetPosts(pageDto.Page, pageDto.PageSize);
+            IEnumerable<Post> posts = _postUoW.PostRepository.GetPosts(pageDto.Page, pageDto.PageSize);
 
             List<PostResponseDto> postsDtos = [];
 
@@ -55,7 +54,7 @@ namespace R_StudioAPI.Controllers
         [HttpGet("get/{id}")]
         public IActionResult GetPost(long id)
         {
-            Post? post = _postRepository.Get(id);
+            Post? post = _postUoW.PostRepository.Get(id);
 
             if (post == null)
             {
@@ -84,7 +83,7 @@ namespace R_StudioAPI.Controllers
             {
                 foreach (IFormFile file in postRequestDto.MediaFiles)
                 {
-                    if (!IsMediaFile(file))
+                    if (!_mediaService.IsMediaFile(file))
                     {
                         return BadRequest("The file uploaded is not a media file!");
                     }
@@ -108,20 +107,16 @@ namespace R_StudioAPI.Controllers
 
             Post post = new Post() { Author = user, Text = postRequestDto.Text, CreatedOn = DateTime.Now, Media = media };
 
-            await _postRepository.Create(post);
-            await _postRepository.Save();
+            await _postUoW.PostRepository.Create(post);
+            await _postUoW.Save();
 
             return Ok();
         }
-        private bool IsMediaFile(IFormFile file)
-        {
-            string fileExtension = Path.GetExtension(file.FileName).ToLower();
-            return _mediaService.GetMediaExtensions().Contains(fileExtension);
-        }
+
 
         [HttpPost("update")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdatePost([FromBody] PostRequestDto postRequestDto, [FromBody] long postId)
+        public async Task<IActionResult> UpdatePost([FromForm] PostUpdateDto postRequestDto)
         {
             User? user = await _userManager.FindByNameAsync(User.GetUsername());
 
@@ -130,22 +125,22 @@ namespace R_StudioAPI.Controllers
                 return Unauthorized();
             }
 
-            Post? targetPost = _postRepository.Get(postId);
+            Post? targetPost = _postUoW.PostRepository.Get(postRequestDto.PostId);
 
             if (targetPost == null)
             {
-                return BadRequest($"Post #{postId} not found");
+                return BadRequest($"Post #{postRequestDto.PostId} not found");
             }
 
             if (postRequestDto.MediaFiles != null)
             {
-                _postMediaRepository.RemoveList(targetPost.Media);
+                _postUoW.PostMediaRepository.RemoveList(targetPost.Media);
 
                 List<PostMedia> media = new List<PostMedia>();
 
                 foreach (IFormFile file in postRequestDto.MediaFiles)
                 {
-                    if (!IsMediaFile(file))
+                    if (!_mediaService.IsMediaFile(file))
                     {
                         return BadRequest("The file uploaded is not a media file!");
                     }
@@ -169,9 +164,12 @@ namespace R_StudioAPI.Controllers
                 targetPost.Media = media;
             }
 
-            targetPost.Text = postRequestDto.Text;
+            if (postRequestDto.Text != null)
+            {
+                targetPost.Text = postRequestDto.Text;
+            }
 
-            await _postRepository.Save();
+            await _postUoW.Save();
 
             return Ok();
         }
@@ -192,14 +190,15 @@ namespace R_StudioAPI.Controllers
                 return BadRequest("Not confirmed");
             }
 
-            Post? post = _postRepository.Get(id);
+            Post? post = _postUoW.PostRepository.Get(id);
 
             if (post == null)
             {
                 return BadRequest("Post not found");
             }
 
-            _postRepository.Delete(id);
+            _postUoW.PostRepository.Delete(id);
+            await _postUoW.Save();
 
             return Ok("Post deleted");
         }

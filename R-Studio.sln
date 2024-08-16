@@ -5,7 +5,9 @@ VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R-StudioAPI", "R-StudioAPI\R-StudioAPI.csproj", "{4AC96ADC-6959-4F79-8A98-7E94D7B42C83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "R-StudioNUnitTest", "R-StudioNUnitTest\R-StudioNUnitTest.csproj", "{90532EB6-0E13-4A49-8C34-7CD7FC85B5E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R-StudioNUnitTest", "R-StudioNUnitTest\R-StudioNUnitTest.csproj", "{90532EB6-0E13-4A49-8C34-7CD7FC85B5E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "R-StudioClient", "R-StudioClient\R-StudioClient.csproj", "{DA68031C-BC2C-4C54-B7BC-7025D91CA38D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{90532EB6-0E13-4A49-8C34-7CD7FC85B5E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90532EB6-0E13-4A49-8C34-7CD7FC85B5E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90532EB6-0E13-4A49-8C34-7CD7FC85B5E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA68031C-BC2C-4C54-B7BC-7025D91CA38D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA68031C-BC2C-4C54-B7BC-7025D91CA38D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA68031C-BC2C-4C54-B7BC-7025D91CA38D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA68031C-BC2C-4C54-B7BC-7025D91CA38D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
